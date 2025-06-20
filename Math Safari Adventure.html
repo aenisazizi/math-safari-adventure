@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Safari Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Baloo 2', cursive;
+            background-color: #f0fff4;
+            overflow-x: hidden;
+        }
+        
+        .safari-card {
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .safari-card:hover {
+            transform: translateY(-5px);
+            border-color: #4ade80;
+        }
+        
+        .answer-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+        
+        .answer-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        
+        .animal {
+            display: inline-block;
+            font-size: 2.5rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .animal:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        .animal.counted {
+            filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.8));
+        }
+        
+        .animal.crossed {
+            opacity: 0.4;
+            text-decoration: line-through;
+            transform: scale(0.9);
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .confetti {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        
+        .operation-icon {
+            animation: pulse 1.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        
+        .safari-guide {
+            animation: bounce 3s infinite alternate;
+        }
+        
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+        
+        .group-container {
+            border: 2px dashed #4ade80;
+            border-radius: 12px;
+            padding: 10px;
+            margin: 8px;
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-width: 80px;
+            min-height: 80px;
+            background-color: rgba(167, 243, 208, 0.3);
+        }
+        
+        .division-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .division-group {
+            border: 2px solid #4ade80;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-width: 80px;
+            min-height: 80px;
+            background-color: rgba(167, 243, 208, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col items-center py-6 px-4">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-600 mb-2">Math Safari Adventure</h1>
+            <p class="text-xl text-green-500">Explore math with animal friends!</p>
+        </div>
+        
+        <!-- Game Container -->
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 md:p-8 relative">
+            <!-- Safari Guide -->
+            <div class="absolute -top-16 right-4 md:right-8 safari-guide">
+                <div class="text-6xl">🦁</div>
+            </div>
+            
+            <!-- Progress and Score -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span id="score" class="ml-2 text-xl font-bold text-gray-700">Score: 0</span>
+                </div>
+                
+                <div class="flex items-center">
+                    <span id="level-text" class="mr-2 text-lg font-bold text-green-700">Level 1</span>
+                    <div class="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-green-500 progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Selection -->
+            <div id="activity-selection" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                <button class="safari-card bg-green-100 hover:bg-green-200 p-6 rounded-xl shadow-md flex flex-col items-center" data-activity="counting">
+                    <div class="text-3xl mb-2 operation-icon">🔢</div>
+                    <h3 class="text-xl font-bold text-green-700">Counting</h3>
+                    <p class="text-green-600 text-sm">How many animals?</p>
+                </button>
+                
+                <button class="safari-card bg-blue-100 hover:bg-blue-200 p-6 rounded-xl shadow-md flex flex-col items-center" data-activity="addition">
+                    <div class="text-3xl mb-2 operation-icon">➕</div>
+                    <h3 class="text-xl font-bold text-blue-700">Addition</h3>
+                    <p class="text-blue-600 text-sm">Join animals together</p>
+                </button>
+                
+                <button class="safari-card bg-purple-100 hover:bg-purple-200 p-6 rounded-xl shadow-md flex flex-col items-center" data-activity="subtraction">
+                    <div class="text-3xl mb-2 operation-icon">➖</div>
+                    <h3 class="text-xl font-bold text-purple-700">Subtraction</h3>
+                    <p class="text-purple-600 text-sm">Animals go away</p>
+                </button>
+                
+                <button class="safari-card bg-pink-100 hover:bg-pink-200 p-6 rounded-xl shadow-md flex flex-col items-center" data-activity="multiplication">
+                    <div class="text-3xl mb-2 operation-icon">✖️</div>
+                    <h3 class="text-xl font-bold text-pink-700">Multiplication</h3>
+                    <p class="text-pink-600 text-sm">Groups of animals</p>
+                </button>
+                
+                <button class="safari-card bg-yellow-100 hover:bg-yellow-200 p-6 rounded-xl shadow-md flex flex-col items-center" data-activity="division">
+                    <div class="text-3xl mb-2 operation-icon">➗</div>
+                    <h3 class="text-xl font-bold text-yellow-700">Division</h3>
+                    <p class="text-yellow-600 text-sm">Share animals equally</p>
+                </button>
+            </div>
+            
+            <!-- Game Area (initially hidden) -->
+            <div id="game-area" class="hidden">
+                <!-- Question Display -->
+                <div id="question-container" class="bg-green-50 rounded-xl p-6 mb-6">
+                    <div class="flex flex-col items-center">
+                        <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-gray-800 mb-4"></h2>
+                        
+                        <div id="visual-container" class="flex flex-wrap justify-center gap-2 my-4"></div>
+                        
+                        <div id="operation-display" class="flex items-center justify-center text-3xl font-bold my-2">
+                            <span id="num1"></span>
+                            <span id="operator" class="mx-3"></span>
+                            <span id="num2"></span>
+                            <span class="mx-3">=</span>
+                            <span class="text-green-600">?</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interactive Area for Counting -->
+                <div id="counting-area" class="mb-6 hidden">
+                    <div class="flex justify-center mb-4">
+                        <div id="count-display" class="text-4xl font-bold text-green-600">0</div>
+                    </div>
+                    <div class="flex justify-center">
+                        <button id="count-submit" class="bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-2 px-6 rounded-xl shadow-md">
+                            Submit Answer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Answer Options -->
+                <div id="answers-container" class="grid grid-cols-3 gap-4"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback" class="mt-6 text-center text-2xl font-bold hidden"></div>
+                
+                <!-- Next Button -->
+                <button id="next-button" class="mt-6 w-full bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 px-8 rounded-xl shadow-lg transform transition hidden">
+                    Next Question
+                </button>
+            </div>
+        </div>
+        
+        <!-- Back to Menu Button (initially hidden) -->
+        <button id="back-button" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md hidden">
+            Back to Menu
+        </button>
+    </div>
+    
+    <!-- Celebration Container -->
+    <div id="celebration" class="celebration hidden"></div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            activity: '',
+            level: 1,
+            score: 0,
+            questionsAnswered: 0,
+            questionsPerLevel: 5,
+            currentAnswer: 0,
+            maxLevel: 3,
+            countingValue: 0
+        };
+        
+        // Animal emojis for visual representation
+        const animals = ['🐵', '🐱', '🦊', '🦁', '🐯', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐸', '🦓', '🦒', '🦝', '🦘', '🦔'];
+        
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up activity selection buttons
+            const activityButtons = document.querySelectorAll('#activity-selection button');
+            activityButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    gameState.activity = button.dataset.activity;
+                    startGame();
+                });
+            });
+            
+            // Set up back button
+            document.getElementById('back-button').addEventListener('click', () => {
+                document.getElementById('activity-selection').classList.remove('hidden');
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('back-button').classList.add('hidden');
+            });
+            
+            // Set up count submit button
+            document.getElementById('count-submit').addEventListener('click', () => {
+                checkCountingAnswer();
+            });
+        });
+        
+        // Start the game with selected activity
+        function startGame() {
+            // Hide activity selection, show game area
+            document.getElementById('activity-selection').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('back-button').classList.remove('hidden');
+            
+            // Reset game state
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.questionsAnswered = 0;
+            updateScore();
+            updateLevel();
+            
+            // Start first question
+            generateQuestion();
+        }
+        
+        // Generate a new question based on the selected activity and level
+        function generateQuestion() {
+            // Hide feedback and next button
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('next-button').classList.add('hidden');
+            
+            // Clear previous visual elements
+            document.getElementById('visual-container').innerHTML = '';
+            
+            // Hide counting area by default
+            document.getElementById('counting-area').classList.add('hidden');
+            
+            // Show answers container by default
+            document.getElementById('answers-container').classList.remove('hidden');
+            
+            let num1, num2, answer, questionText, operatorSymbol;
+            
+            // Generate numbers based on activity and level
+            switch(gameState.activity) {
+                case 'counting':
+                    // For counting, we'll show a number of animals and ask the child to count them
+                    num1 = Math.floor(Math.random() * (gameState.level * 3 + 2)) + 1; // 1-5 for level 1, 1-8 for level 2, etc.
+                    answer = num1;
+                    questionText = "Count the animals! Touch each animal as you count.";
+                    
+                    // Show counting interface
+                    document.getElementById('counting-area').classList.remove('hidden');
+                    document.getElementById('answers-container').classList.add('hidden');
+                    document.getElementById('count-display').textContent = "0";
+                    gameState.countingValue = 0;
+                    
+                    // Visual representation for counting
+                    showVisualCounting(num1);
+                    
+                    // Hide operation display
+                    document.getElementById('operation-display').style.display = 'none';
+                    break;
+                    
+                case 'addition':
+                    num1 = Math.floor(Math.random() * (gameState.level * 2)) + 1;
+                    num2 = Math.floor(Math.random() * (gameState.level * 2)) + 1;
+                    answer = num1 + num2;
+                    questionText = "How many animals in total?";
+                    operatorSymbol = "+";
+                    
+                    // Show operation display
+                    document.getElementById('operation-display').style.display = 'flex';
+                    
+                    // Visual representation for addition
+                    showVisualAddition(num1, num2);
+                    break;
+                    
+                case 'subtraction':
+                    num2 = Math.floor(Math.random() * (gameState.level * 2)) + 1;
+                    num1 = num2 + Math.floor(Math.random() * (gameState.level * 2));
+                    answer = num1 - num2;
+                    questionText = "How many animals are left?";
+                    operatorSymbol = "-";
+                    
+                    // Show operation display
+                    document.getElementById('operation-display').style.display = 'flex';
+                    
+                    // Visual representation for subtraction
+                    showVisualSubtraction(num1, num2);
+                    break;
+                    
+                case 'multiplication':
+                    // For young children, keep multiplication very simple
+                    num1 = Math.min(5, gameState.level + 1);
+                    num2 = Math.floor(Math.random() * 3) + 1; // Max 3 for preschoolers
+                    answer = num1 * num2;
+                    questionText = `${num2} groups of ${num1} animals is how many in total?`;
+                    operatorSymbol = "×";
+                    
+                    // Show operation display
+                    document.getElementById('operation-display').style.display = 'flex';
+                    
+                    // Visual representation for multiplication
+                    showVisualMultiplication(num1, num2);
+                    break;
+                    
+                case 'division':
+                    // For young children, keep division very simple with no remainders
+                    num2 = Math.floor(Math.random() * 2) + 2; // Divisors 2 or 3
+                    answer = Math.floor(Math.random() * 3) + 1; // Quotient 1-3
+                    num1 = num2 * answer; // Ensure clean division
+                    questionText = `If we share ${num1} animals equally among ${num2} friends, how many does each friend get?`;
+                    operatorSymbol = "÷";
+                    
+                    // Show operation display
+                    document.getElementById('operation-display').style.display = 'flex';
+                    
+                    // Visual representation for division
+                    showVisualDivision(num1, num2);
+                    break;
+            }
+            
+            // Store current answer
+            gameState.currentAnswer = answer;
+            
+            // Update question display
+            document.getElementById('question-text').textContent = questionText;
+            
+            // Update operation display if applicable
+            if (gameState.activity !== 'counting') {
+                document.getElementById('num1').textContent = num1;
+                document.getElementById('num2').textContent = num2;
+                document.getElementById('operator').textContent = operatorSymbol;
+                
+                // Generate answer options
+                generateAnswerOptions(answer);
+            }
+        }
+        
+        // Visual representation for counting
+        function showVisualCounting(count) {
+            const container = document.getElementById('visual-container');
+            container.className = 'flex flex-wrap justify-center gap-3 my-4';
+            
+            for (let i = 0; i < count; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                
+                // Add click event for counting interaction
+                animal.addEventListener('click', function() {
+                    if (!this.classList.contains('counted')) {
+                        this.classList.add('counted');
+                        gameState.countingValue++;
+                        document.getElementById('count-display').textContent = gameState.countingValue;
+                    }
+                });
+                
+                container.appendChild(animal);
+            }
+        }
+        
+        // Visual representation for addition
+        function showVisualAddition(num1, num2) {
+            const container = document.getElementById('visual-container');
+            container.className = 'flex flex-wrap justify-center items-center gap-4 my-4';
+            
+            // First group
+            const group1 = document.createElement('div');
+            group1.className = 'group-container';
+            
+            for (let i = 0; i < num1; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                group1.appendChild(animal);
+            }
+            
+            // Plus sign
+            const plus = document.createElement('div');
+            plus.className = 'text-4xl font-bold text-blue-600 mx-4';
+            plus.textContent = '+';
+            
+            // Second group
+            const group2 = document.createElement('div');
+            group2.className = 'group-container';
+            
+            for (let i = 0; i < num2; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                group2.appendChild(animal);
+            }
+            
+            container.appendChild(group1);
+            container.appendChild(plus);
+            container.appendChild(group2);
+        }
+        
+        // Visual representation for subtraction
+        function showVisualSubtraction(num1, num2) {
+            const container = document.getElementById('visual-container');
+            container.className = 'flex flex-col items-center gap-4 my-4';
+            
+            // All animals
+            const allAnimals = document.createElement('div');
+            allAnimals.className = 'group-container w-full max-w-md';
+            
+            for (let i = 0; i < num1; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                
+                // Mark animals to be taken away
+                if (i >= num1 - num2) {
+                    animal.classList.add('crossed');
+                }
+                
+                allAnimals.appendChild(animal);
+            }
+            
+            // Arrow
+            const arrow = document.createElement('div');
+            arrow.className = 'text-4xl font-bold text-purple-600 my-2';
+            arrow.textContent = '↓';
+            
+            // Remaining animals
+            const remainingAnimals = document.createElement('div');
+            remainingAnimals.className = 'group-container w-full max-w-md';
+            
+            for (let i = 0; i < num1 - num2; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                remainingAnimals.appendChild(animal);
+            }
+            
+            container.appendChild(allAnimals);
+            container.appendChild(arrow);
+            container.appendChild(remainingAnimals);
+        }
+        
+        // Visual representation for multiplication
+        function showVisualMultiplication(num1, num2) {
+            const container = document.getElementById('visual-container');
+            container.className = 'flex flex-wrap justify-center gap-4 my-4';
+            
+            for (let i = 0; i < num2; i++) {
+                const group = document.createElement('div');
+                group.className = 'group-container';
+                
+                for (let j = 0; j < num1; j++) {
+                    const animal = document.createElement('div');
+                    animal.className = 'animal';
+                    animal.textContent = getRandomAnimal();
+                    group.appendChild(animal);
+                }
+                
+                container.appendChild(group);
+            }
+        }
+        
+        // Visual representation for division
+        function showVisualDivision(num1, num2) {
+            const container = document.getElementById('visual-container');
+            container.className = 'flex flex-col items-center gap-4 my-4';
+            
+            // All animals
+            const allAnimals = document.createElement('div');
+            allAnimals.className = 'group-container w-full max-w-md';
+            
+            for (let i = 0; i < num1; i++) {
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                animal.textContent = getRandomAnimal();
+                allAnimals.appendChild(animal);
+            }
+            
+            container.appendChild(allAnimals);
+            
+            // Arrow
+            const arrow = document.createElement('div');
+            arrow.className = 'text-4xl font-bold text-yellow-600 my-2';
+            arrow.textContent = '↓';
+            container.appendChild(arrow);
+            
+            // Groups
+            const groupsContainer = document.createElement('div');
+            groupsContainer.className = 'division-container';
+            
+            for (let i = 0; i < num2; i++) {
+                const group = document.createElement('div');
+                group.className = 'division-group';
+                
+                // Each group gets the same number of animals
+                for (let j = 0; j < num1/num2; j++) {
+                    const animal = document.createElement('div');
+                    animal.className = 'animal';
+                    animal.textContent = getRandomAnimal();
+                    group.appendChild(animal);
+                }
+                
+                groupsContainer.appendChild(group);
+            }
+            
+            container.appendChild(groupsContainer);
+        }
+        
+        // Generate answer options
+        function generateAnswerOptions(correctAnswer) {
+            const container = document.getElementById('answers-container');
+            container.innerHTML = '';
+            
+            // Generate 3 options including the correct answer
+            let options = [correctAnswer];
+            
+            while (options.length < 3) {
+                // Generate a random number close to the correct answer
+                let offset = Math.floor(Math.random() * 5) + 1;
+                if (Math.random() > 0.5) offset = -offset;
+                
+                const randomOption = Math.max(1, correctAnswer + offset);
+                
+                // Add the option if it's not already in the array
+                if (!options.includes(randomOption)) {
+                    options.push(randomOption);
+                }
+            }
+            
+            // Shuffle options
+            options = shuffleArray(options);
+            
+            // Create buttons for each option
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 rounded-xl shadow-md';
+                button.textContent = option;
+                
+                button.addEventListener('click', () => checkAnswer(option));
+                
+                container.appendChild(button);
+            });
+        }
+        
+        // Check counting answer
+        function checkCountingAnswer() {
+            const feedbackElement = document.getElementById('feedback');
+            const nextButton = document.getElementById('next-button');
+            
+            if (gameState.countingValue === gameState.currentAnswer) {
+                // Correct answer
+                feedbackElement.textContent = 'Correct! Great counting! 🎉';
+                feedbackElement.className = 'mt-6 text-center text-2xl font-bold text-green-600';
+                
+                // Increase score
+                gameState.score += 10 * gameState.level;
+                updateScore();
+                
+                // Show celebration
+                showCelebration();
+            } else {
+                // Incorrect answer
+                feedbackElement.textContent = `Not quite! There are ${gameState.currentAnswer} animals.`;
+                feedbackElement.className = 'mt-6 text-center text-2xl font-bold text-red-500';
+            }
+            
+            feedbackElement.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+            
+            // Set up next button
+            nextButton.onclick = () => {
+                gameState.questionsAnswered++;
+                updateProgress();
+                
+                // Check if we should move to the next level
+                if (gameState.questionsAnswered >= gameState.questionsPerLevel) {
+                    if (gameState.level < gameState.maxLevel) {
+                        gameState.level++;
+                        updateLevel();
+                    }
+                    gameState.questionsAnswered = 0;
+                    updateProgress();
+                }
+                
+                generateQuestion();
+            };
+        }
+        
+        // Check the answer for multiple choice questions
+        function checkAnswer(selectedAnswer) {
+            const feedbackElement = document.getElementById('feedback');
+            const nextButton = document.getElementById('next-button');
+            
+            // Disable all answer buttons
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.classList.add('opacity-50');
+            });
+            
+            if (selectedAnswer === gameState.currentAnswer) {
+                // Correct answer
+                feedbackElement.textContent = 'Correct! Great job! 🎉';
+                feedbackElement.className = 'mt-6 text-center text-2xl font-bold text-green-600';
+                
+                // Increase score
+                gameState.score += 10 * gameState.level;
+                updateScore();
+                
+                // Show celebration
+                showCelebration();
+            } else {
+                // Incorrect answer
+                feedbackElement.textContent = `Not quite! The answer is ${gameState.currentAnswer}.`;
+                feedbackElement.className = 'mt-6 text-center text-2xl font-bold text-red-500';
+            }
+            
+            feedbackElement.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+            
+            // Set up next button
+            nextButton.onclick = () => {
+                gameState.questionsAnswered++;
+                updateProgress();
+                
+                // Check if we should move to the next level
+                if (gameState.questionsAnswered >= gameState.questionsPerLevel) {
+                    if (gameState.level < gameState.maxLevel) {
+                        gameState.level++;
+                        updateLevel();
+                    }
+                    gameState.questionsAnswered = 0;
+                    updateProgress();
+                }
+                
+                generateQuestion();
+            };
+        }
+        
+        // Update score display
+        function updateScore() {
+            document.getElementById('score').textContent = `Score: ${gameState.score}`;
+        }
+        
+        // Update level display
+        function updateLevel() {
+            document.getElementById('level-text').textContent = `Level ${gameState.level}`;
+        }
+        
+        // Update progress bar
+        function updateProgress() {
+            const progressPercent = (gameState.questionsAnswered / gameState.questionsPerLevel) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+        }
+        
+        // Show celebration animation
+        function showCelebration() {
+            const celebrationContainer = document.getElementById('celebration');
+            celebrationContainer.innerHTML = '';
+            celebrationContainer.classList.remove('hidden');
+            
+            // Create confetti
+            for (let i = 0; i < 30; i++) {
+                createConfetti(celebrationContainer);
+            }
+            
+            // Hide celebration after animation completes
+            setTimeout(() => {
+                celebrationContainer.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Create a single confetti element
+        function createConfetti(container) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // Randomly choose between star, circle, or animal
+            const type = Math.floor(Math.random() * 3);
+            
+            if (type === 0) {
+                // Circle
+                confetti.style.width = '15px';
+                confetti.style.height = '15px';
+                confetti.style.borderRadius = '50%';
+                confetti.style.backgroundColor = getRandomColor();
+            } else if (type === 1) {
+                // Star
+                confetti.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="${getRandomColor()}">
+                        <path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 16.77l-6.18 3.25L7 13.14 2 8.27l6.91-1.01L12 1z"/>
+                    </svg>
+                `;
+            } else {
+                // Animal
+                confetti.style.fontSize = '20px';
+                confetti.textContent = getRandomAnimal();
+            }
+            
+            // Set random position
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.top = `${Math.random() * 30 + 70}%`;
+            
+            // Set animation
+            confetti.style.animation = `float-up ${Math.random() * 2 + 2}s ease-out forwards`;
+            
+            container.appendChild(confetti);
+        }
+        
+        // Get random color
+        function getRandomColor() {
+            const colors = ['#4ade80', '#60a5fa', '#f472b6', '#a78bfa', '#fbbf24', '#fb923c'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Get random animal emoji
+        function getRandomAnimal() {
+            return animals[Math.floor(Math.random() * animals.length)];
+        }
+        
+        // Shuffle array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
